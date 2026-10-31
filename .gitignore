@@ -1,0 +1,25 @@
+# Environnements virtuels et caches Python
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+*.env
+
+# Données opérationnelles (confidentielles) et sorties générées
+*.xlsx
+*.xls
+*.csv
+data/
+uploads/
+*.db
+*.sqlite
+gantt_*.html
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.DS_Store

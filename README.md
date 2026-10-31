@@ -1,118 +1,136 @@
-# ✈️ Affectation des postes de stationnement avions & suivi temps réel
+# ✈️ Aircraft Stand Assignment & Real-Time Tracking
 
-**Système d'aide à la décision pour l'aéroport Tanger Ibn Battouta (ONDA)**
+🇬🇧 English | [🇫🇷 Français](README.fr.md)
 
-Projet réalisé lors d'un stage à l'ONDA (Office National Des Aéroports), du 01/07/2026 au 01/09/2026, au sein des services PCO, CCO et SOA.
+**Decision-support system for Tanger Ibn Battouta Airport (ONDA)**
+
+Built during an internship at ONDA (Office National Des Aéroports, Morocco's national airports authority), from 01/07/2026 to 01/09/2026, within the PCO, CCO and SOA departments.
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue) ![OR-Tools](https://img.shields.io/badge/OR--Tools-CP--SAT-green) ![Flask](https://img.shields.io/badge/Flask-web%20app-lightgrey)
 
-<!-- Ajoute ici une capture d'écran du Gantt : ![Gantt](docs/gantt.png) -->
-
 ---
 
-## 🎯 Problème
+## 🎯 Problem
 
-Chaque semaine, le programme des vols doit être transformé en un planning d'affectation des avions aux postes de stationnement (stands). Il faut respecter la compatibilité avion/poste, éviter les chevauchements et garder une marge de sécurité, puis replanifier dès qu'un retard perturbe le programme.
+Every week, the flight schedule has to be turned into a plan assigning each aircraft to a parking stand. The plan must respect aircraft/stand compatibility, avoid overlaps and keep a safety margin, and must be re-planned as soon as a delay disrupts the schedule.
 
 ## 💡 Solution
 
-Un pipeline qui lit le programme des vols (Excel), calcule un planning optimal avec un solveur de programmation par contraintes, l'affiche sous forme de Gantt, puis surveille les vols en temps réel pour détecter les perturbations et réoptimiser.
+A pipeline that reads the flight schedule (Excel), computes an optimal plan with a constraint-programming solver, displays it as a Gantt chart, then monitors flights in real time to detect disruptions and re-optimize.
 
-> **Système d'aide à la décision, pas de remplacement** : l'agent PCO reste l'unique décideur opérationnel. Le système propose, l'humain valide.
+> **A decision-support system, not a replacement**: the PCO operator remains the only operational decision-maker. The system proposes, the human validates.
 
 ## 🔄 Pipeline
 
 ```mermaid
 flowchart LR
-    A[Programme des vols<br/>Excel] --> B[Parsing &<br/>normalisation]
-    B --> C[Reconstruction<br/>des rotations]
-    C --> D[Définition<br/>des ressources]
-    D --> E[Optimisation<br/>CP-SAT]
-    E --> F[Planning<br/>+ Gantt]
-    F --> G[Surveillance<br/>ADS-B temps réel]
-    G --> H[Détection de<br/>perturbation]
-    H --> I[Alerte]
-    I --> J[Réoptimisation]
+    A[Flight schedule<br/>Excel] --> B[Parsing &<br/>normalization]
+    B --> C[Rotation<br/>reconstruction]
+    C --> D[Resource<br/>definition]
+    D --> E[CP-SAT<br/>optimization]
+    E --> F[Plan<br/>+ Gantt]
+    F --> G[Real-time ADS-B<br/>monitoring]
+    G --> H[Disruption<br/>detection]
+    H --> I[Alert]
+    I --> J[Re-optimization]
     J --> F
 ```
 
-## 🧮 Modèle d'optimisation
+## 🧮 Optimization model
 
-**Ressources** : 15 postes — `N8, N7, N6, N5, N4, N3, N2, N1, E7, E6, E5, E4, E3, E2, E1`
+**Resources**: 15 stands — `N8, N7, N6, N5, N4, N3, N2, N1, E7, E6, E5, E4, E3, E2, E1`
 
-**Contraintes dures**
-- Compatibilité entre l'avion et le poste
-- Aucun chevauchement horaire sur un même poste
-- Marge de 60 minutes entre deux occupations
-- Adjacence push-back respectée
+**Hard constraints**
+- Aircraft / stand compatibility
+- No time overlap on the same stand
+- 60-minute buffer between two occupations
+- Push-back adjacency respected
 
-**Préférences (contraintes souples)**
-- Proximité des portes
-- Préférence pour N8 lors des rotations rapides
-- Pénalité en cas de débordement vers les postes ECO
+**Preferences (soft constraints)**
+- Proximity to gates
+- Preference for N8 on quick turnarounds
+- Penalty when overflowing to ECO stands
 
-## 📊 Résultats
+## 📊 Results
 
-Testé sur un programme de vols réel (semaine S32, du 03 au 09 août 2026).
+Tested on a real flight schedule (week 32, 03–09 August 2026).
 
-| Indicateur | Résultat |
+| Indicator | Result |
 |---|---|
-| Vols extraits du programme | 276, aucune ligne ignorée |
-| Affectations réussies sur la semaine | **327 / 329 (99,39 %)** |
-| Journée du 04/08/2026 | 47 / 47 vols affectés, solveur au statut **OPTIMAL** |
-| Scénario de retard de +40 min sur un vol | Réaffectation automatique, **0 conflit** restant |
+| Flights extracted from the schedule | 276, no row skipped |
+| Successful assignments over the week | **327 / 329 (99.39 %)** |
+| Day of 04/08/2026 | 47 / 47 flights assigned, solver status **OPTIMAL** |
+| +40 min delay scenario on one flight | Automatic reassignment, **0 conflicts** left |
 
-## 🖥️ Interface (Flask, en local)
+## 🖥️ Interface (Flask, local)
 
-- Sélection de la date
-- Gantt journalier et hebdomadaire
-- Tableau opérationnel et liste des affectations
-- Alertes et état de la surveillance temps réel
+- Date selection
+- Daily and weekly Gantt charts
+- Operations table and assignment list
+- Alerts and real-time monitoring status
 
-## 🛠️ Stack technique
+## 🛠️ Tech stack
 
-| Domaine | Technologies |
+| Area | Technologies |
 |---|---|
-| Optimisation | Python, Google OR-Tools (CP-SAT) |
-| Données | Parseur Excel, SQLAlchemy |
-| Temps réel | OpenSky Network (source principale), airplanes.live (secours), données ADS-B |
-| Interface | Flask |
+| Optimization | Python, Google OR-Tools (CP-SAT) |
+| Data | Excel parser, SQLAlchemy |
+| Real time | OpenSky Network (primary source), airplanes.live (fallback), ADS-B data |
+| Interface | Flask, Plotly |
 
-## 🚀 Installation
+## 📁 Structure
+
+```
+onda-stand-assignment/
+└── tanger_pco_gantt/
+    ├── src/               # Source code (parser, optimizer, real-time, Flask UI)
+    ├── requirements.txt
+    ├── .env.example       # API key configuration template
+    ├── etude_comparative_APIs.md
+    └── APIs_validation_encadrant.md
+```
+
+Module details: [`tanger_pco_gantt/README.md`](tanger_pco_gantt/README.md).
+
+## 🚀 Installation & run
 
 ```bash
 git clone https://github.com/ayakhama3/onda-stand-assignment.git
-cd onda-stand-assignment
+cd onda-stand-assignment/tanger_pco_gantt
 
 python -m venv venv
-venv\Scripts\activate          # Linux/Mac : source venv/bin/activate
+venv\Scripts\activate          # Linux/macOS: source venv/bin/activate
 pip install -r requirements.txt
 
-python <fichier_de_lancement>.py   # À ADAPTER : le fichier qui démarre l'application Flask
+cd src
+python app.py "path/to/schedule.xlsx" 04/08/2026
 ```
 
-Ouvre ensuite l'adresse affichée dans le terminal (généralement `http://127.0.0.1:5000`).
+Then open `http://127.0.0.1:5000` in your browser. The second argument (date, `DD/MM/YYYY`) is optional.
 
-### Données
+### Real-time tracking configuration
 
-Pour des raisons de confidentialité, **le programme réel des vols de l'aéroport n'est pas publié**. Place un fichier au même format dans le dossier `data/` (un exemple fictif est fourni : `data/exemple_programme.xlsx`).
+Copy `tanger_pco_gantt/.env.example` to `tanger_pco_gantt/.env` and fill in your own keys (OpenSky Network, and AviationStack as an option). The `.env` file is git-ignored.
 
-<!-- À faire : créer un petit fichier Excel fictif avec la même structure de colonnes -->
+### Data
 
-## ⚠️ Limites connues
+For confidentiality reasons, **the airport's real flight schedule is not published**, nor are the Gantt charts generated from it. To run the application, provide an Excel file in the same format as the airport's operational schedule.
 
-- Pas d'écriture directe dans SOAM / ivMS-4200
-- Les données ADS-B ne remplacent pas le programme opérationnel
-- Les portes, comptoirs et tapis ne sont pas optimisés simultanément
-- Le système reste une aide à la décision
+## ⚠️ Known limitations
 
-## 🔭 Pistes d'amélioration
+- No direct write access to SOAM / ivMS-4200
+- ADS-B data does not replace the operational schedule
+- Gates, counters and baggage belts are not optimized simultaneously
+- The system remains a decision-support tool
 
-- Optimisation conjointe des postes, portes et comptoirs
-- Déploiement sur un serveur avec conteneurisation (Docker)
-- Tests automatisés et intégration continue
+## 🔭 Roadmap
 
-## 👩‍💻 Auteure
+- Joint optimization of stands, gates and counters
+- Server deployment with containerization (Docker)
+- Automated tests and continuous integration
+- Fictitious sample file and anonymized screenshots of the interface
 
-**Aya Khama** — Élève ingénieure Data Science & IA (EMSI, promotion 2027)
+## 👩‍💻 Author
+
+**Aya Khama** — Data Science & AI engineering student (EMSI, class of 2027)
 [LinkedIn](https://www.linkedin.com/in/aya-khama-160752387/) · [GitHub](https://github.com/ayakhama3)
